@@ -49,6 +49,19 @@ _extent_count()
 	$XFS_IO_PROG -c "fiemap" $1 | tail -n +2 | grep -v hole | wc -l| $AWK_PROG '{print $1}'
 }
 
+# Get the number of unique file extents
+# Unique file extents means they have different ondisk bytenr
+# Some filesystem supports reflinkat() or in-band de-dup can create
+# a file whose all file extents points to the same ondisk bytenr
+# this can be used to test if such reflinkat() or in-band de-dup works
+_extent_count_uniq()
+{
+	file=$1
+	$XFS_IO_PROG -c "fiemap" $file >> $seqres.full 2>&1
+	$XFS_IO_PROG -c "fiemap" $file | tail -n +2 | grep -v hole |\
+		$AWK_PROG '{print $3}' | sort | uniq | wc -l
+}
+
 _check_extent_count()
 {
 	min=$1
