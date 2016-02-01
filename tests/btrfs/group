@@ -120,3 +120,4 @@
 117 auto quick send clone
 118 auto quick snapshot metadata
 200 auto dedup
+201 auto dedup
