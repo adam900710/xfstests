@@ -1,0 +1,116 @@
+#! /bin/bash
+# FS QA Test 200
+#
+# Basic btrfs inband dedupe test for inmemory backend
+#
+#-----------------------------------------------------------------------
+# Copyright (c) 2016 Fujitsu.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it would be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write the Free Software Foundation,
+# Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#-----------------------------------------------------------------------
+#
+
+seq=`basename $0`
+seqres=$RESULT_DIR/$seq
+echo "QA output created by $seq"
+
+here=`pwd`
+tmp=/tmp/$$
+status=1	# failure is the default!
+trap "_cleanup; exit \$status" 0 1 2 3 15
+
+_cleanup()
+{
+	cd /
+	rm -f $tmp.*
+}
+
+# get standard environment, filters and checks
+. ./common/rc
+. ./common/filter
+. ./common/defrag
+
+# remove previous $seqres.full before test
+rm -f $seqres.full
+
+# real QA test starts here
+
+_supported_fs btrfs
+_supported_os Linux
+_require_scratch
+_require_btrfs_command dedupe
+_require_btrfs_fs_feature dedupe
+
+# File size is twice the maximum file extent of btrfs
+# So even fallbacked to non-dedupe, it will have at least 2 extents
+file_size=256m
+
+_scratch_mkfs >> $seqres.full 2>&1
+_scratch_mount
+
+do_dedupe_test()
+{
+	dedupe_bs=$1
+
+	echo "Testing inmemory dedupe backend with block size $dedupe_bs"
+	_run_btrfs_util_prog dedupe enable -f -s inmemory -b $dedupe_bs \
+		$SCRATCH_MNT
+	# do sync write to ensure dedupe hash is added into dedupe pool
+	$XFS_IO_PROG -f -c "pwrite -b $dedupe_bs 0 $dedupe_bs" -c "fsync"\
+		$SCRATCH_MNT/initial_block | _filter_xfs_io
+
+	# do sync write to ensure we can get stable fiemap later
+	$XFS_IO_PROG -f -c "pwrite -b $dedupe_bs 0 $file_size" -c "fsync"\
+		$SCRATCH_MNT/real_file | _filter_xfs_io
+
+	# Test if real_file is de-duplicated
+	nr_uniq_extents=$(_extent_count_uniq $SCRATCH_MNT/real_file)
+	nr_total_extents=$(_extent_count $SCRATCH_MNT/real_file)
+	nr_deduped_extents=$(($nr_total_extents - $nr_uniq_extents))
+
+	echo "deduped/total: $nr_deduped_extents/$nr_total_extents" \
+		>> $seqres.full
+	# Allow a small amount of dedupe miss, as commit interval or
+	# memory pressure may break a dedupe_bs block and cause
+	# small extent which won't go through dedupe routine
+	_within_tolerance "number of deduped extents" $nr_deduped_extents \
+		$nr_total_extents 5% -v
+
+	# Also check the md5sum to ensure data is not corrupted
+	md5=$(_md5_checksum $SCRATCH_MNT/real_file)
+	echo "md5sum: $md5"
+}
+
+# Test inmemory dedupe first, use 64K dedupe bs to keep compatibility
+# with 64K page size
+do_dedupe_test 64K
+
+# Test 128K(default) dedupe bs
+do_dedupe_test 128K
+
+# Test 1M dedupe bs
+do_dedupe_test 1M
+
+# Check dedupe disable
+_run_btrfs_util_prog dedupe disable $SCRATCH_MNT
+
+# success, all done
+status=0
+exit
+# Check dedupe disable
+_run_btrfs_util_prog dedupe disable $SCRATCH_MNT
+
+# success, all done
+status=0
+exit
