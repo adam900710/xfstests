@@ -124,3 +124,4 @@
 120 auto quick snapshot metadata
 121 auto quick snapshot qgroup
 122 auto quick snapshot qgroup
+200 auto ib-dedupe
