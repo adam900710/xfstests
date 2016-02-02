@@ -1,0 +1,15 @@
+QA output created by 202
+wrote 65536/65536 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+wrote 268435456/268435456 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+wrote 268435456/268435456 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+wrote 268435456/268435456 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+wrote 268435456/268435456 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+SCRATCH_MNT/dedupe_file: de-duplicated
+SCRATCH_MNT/no_dedupe_file: not de-duplicated
+SCRATCH_MNT/dedupe_dir/default_file: de-duplicated
+SCRATCH_MNT/no_dedupe_dir/default_file: not de-duplicated
