@@ -128,3 +128,4 @@
 123 auto quick qgroup
 200 auto ib-dedupe
 201 auto ib-dedupe
+203 auto ib-dedupe balance
