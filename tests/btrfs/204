@@ -1,0 +1,74 @@
+#! /bin/bash
+# FS QA Test 204
+#
+# Regression test for balancing dedupe tree metadata
+# If btrfs balanced dedupe tree block twice, delayed ref will be corrupted
+# and cause kernel warning with RO fs.
+#
+#-----------------------------------------------------------------------
+# Copyright (c) 2016 Fujitsu.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it would be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write the Free Software Foundation,
+# Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#-----------------------------------------------------------------------
+#
+
+seq=`basename $0`
+seqres=$RESULT_DIR/$seq
+echo "QA output created by $seq"
+
+here=`pwd`
+tmp=/tmp/$$
+status=1	# failure is the default!
+trap "_cleanup; exit \$status" 0 1 2 3 15
+
+_cleanup()
+{
+	cd /
+	rm -f $tmp.*
+}
+
+# get standard environment, filters and checks
+. ./common/rc
+. ./common/filter
+. ./common/reflink
+
+# remove previous $seqres.full before test
+rm -f $seqres.full
+
+# real QA test starts here
+
+_supported_fs btrfs
+_supported_os Linux
+_require_scratch
+_require_btrfs_subcommand dedupe
+_require_btrfs_fs_feature dedupe
+_require_btrfs_mkfs_feature dedupe
+
+_scratch_mkfs "-O dedupe" >> $seqres.full 2>&1
+_scratch_mount
+
+_run_btrfs_util_prog dedupe enable $SCRATCH_MNT
+
+# Balance btrfs metadata twice, this will ensure the second balance
+# to drop refence on old dedupe root bytenr if kernel has the dedupe bug
+_run_btrfs_util_prog balance start -m $SCRATCH_MNT
+_run_btrfs_util_prog balance start -m $SCRATCH_MNT
+
+# Disable will force a sync_fs() and cause kernel warning
+_run_btrfs_util_prog dedupe disable $SCRATCH_MNT
+
+echo "Silence is golden"
+# success, all done
+status=0
+exit
