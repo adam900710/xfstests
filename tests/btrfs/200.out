@@ -1,0 +1,22 @@
+QA output created by 200
+Testing inmemory dedupe backend with block size 64K
+wrote 65536/65536 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+wrote 268435456/268435456 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+number of deduped extents is in range
+md5sum: a30e0f3f1b0884081de11d4357811c2e
+Testing inmemory dedupe backend with block size 128K
+wrote 131072/131072 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+wrote 268435456/268435456 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+number of deduped extents is in range
+md5sum: a30e0f3f1b0884081de11d4357811c2e
+Testing inmemory dedupe backend with block size 1M
+wrote 1048576/1048576 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+wrote 268435456/268435456 bytes at offset 0
+XXX Bytes, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+number of deduped extents is in range
+md5sum: a30e0f3f1b0884081de11d4357811c2e
