@@ -330,6 +330,27 @@ _overlay_scratch_unmount()
 	$UMOUNT_PROG $SCRATCH_MNT
 }
 
+_run_btrfs_post_mount_hook()
+{
+	mnt_point=$1
+	for n in $ALWAYS_ENABLE_BTRFS_FEATURE; do
+		if [ $n == "quota" -o $n == "qgroup" ]; then
+			# Quota can be enabled for several times
+			# and won't cause bug
+			_run_btrfs_util_prog quota enable $mnt_point
+		fi
+	done
+}
+
+_post_mount_hook()
+{
+	mnt_point=$1
+
+	if [ $FSTYP == "btrfs" -a -v ALWAYS_ENABLE_BTRFS_FEATURE ]; then
+		_run_btrfs_post_mount_hook $mnt_point
+	fi
+}
+
 _scratch_mount()
 {
     if [ "$FSTYP" == "overlay" ]; then
@@ -337,6 +358,7 @@ _scratch_mount()
         return $?
     fi
     _mount -t $FSTYP `_scratch_mount_options $*`
+    _post_mount_hook $SCRATCH_MNT
 }
 
 _scratch_unmount()
@@ -386,6 +408,7 @@ _test_mount()
     fi
     _test_options mount
     _mount -t $FSTYP $TEST_OPTIONS $TEST_FS_MOUNT_OPTS $SELINUX_MOUNT_OPTIONS $* $TEST_DEV $TEST_DIR
+    _post_mount_hook $TEST_DIR
 }
 
 _test_unmount()
