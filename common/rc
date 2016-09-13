@@ -335,9 +335,25 @@ _run_btrfs_post_mount_hook()
 	mnt_point=$1
 	for n in $ALWAYS_ENABLE_BTRFS_FEATURE; do
 		if [ $n == "quota" -o $n == "qgroup" ]; then
-			# Quota can be enabled for several times
-			# and won't cause bug
+			# Re-enable quota won't cause anything wrong
 			_run_btrfs_util_prog quota enable $mnt_point
+		fi
+		if [ $n == "dedupe" -o $n == "inband-dedupe" -o $n == "dedupe-inband" ]; then
+			# Need to check if kernel/progs support dedupe
+			_require_btrfs_fs_feature dedupe
+			_require_btrfs_subcommand dedupe
+
+			# Check if dedupe is already enabled, or we will
+			# overwrite previous on-disk backend config
+			$BTRFS_UTIL_PROG dedupe status $mnt_point | grep -q "Enabled"
+			if [ $1 == 0 ]; then
+				break
+			fi
+
+			# This will enable dedupe with default options, so
+			# btrfs dedupe test cases needs to use '-f' option to
+			# override default config.
+			_run_btrfs_util_prog dedupe enable $mnt_point
 		fi
 	done
 }
